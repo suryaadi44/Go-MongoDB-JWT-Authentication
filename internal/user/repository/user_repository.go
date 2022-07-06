@@ -34,7 +34,7 @@ func (u *UserRepository) IsEmailExists(ctx context.Context, email string) bool {
 
 	var user entity.User
 	err := collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
-	if err != nil {
+	if err == mongo.ErrNoDocuments {
 		return false
 	}
 
@@ -46,7 +46,7 @@ func (u *UserRepository) IsUsernameExists(ctx context.Context, username string) 
 
 	var user entity.User
 	err := collection.FindOne(ctx, bson.M{"_id": username}).Decode(&user)
-	if err != nil {
+	if err == mongo.ErrNoDocuments {
 		return false
 	}
 
@@ -76,4 +76,16 @@ func (u *UserRepository) AddTokenToBlacklist(ctx context.Context, token string, 
 		return err
 	}
 	return nil
+}
+
+func (u *UserRepository) IsTokenBlacklisted(ctx context.Context, token string) bool {
+	collection := u.db.Collection("blacklisted_tokens")
+
+	var blackListedToken entity.BlackListedToken
+	err := collection.FindOne(ctx, bson.M{"token": token}).Decode(&blackListedToken)
+	if err == mongo.ErrNoDocuments {
+		return false
+	}
+
+	return true
 }

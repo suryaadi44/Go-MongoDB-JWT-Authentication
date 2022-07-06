@@ -1,7 +1,10 @@
 package controller
 
 import (
+	"os"
+
 	"github.com/gofiber/fiber/v2"
+	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/suryaadi44/Go-MongoDB-JWT-Authentication/internal/user/dto"
 	"github.com/suryaadi44/Go-MongoDB-JWT-Authentication/internal/user/service"
 
@@ -23,6 +26,15 @@ func NewUserController(Router fiber.Router, userService service.UserService) *Us
 func (u *UserController) InitializeController() {
 	u.Router.Post("/user/signup", u.RegisterUser)
 	u.Router.Post("/user/login", u.AuthenticateUser)
+
+	u.Router.Use(jwtware.New(jwtware.Config{
+		SigningKey: []byte(os.Getenv("JWT_SECRET")),
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.Status(fiber.StatusUnauthorized).JSON(global.NewBaseResponse(fiber.StatusUnauthorized, "Unauthorized"))
+		},
+	}))
+
+	u.Router.Get("/user/auth", u.IsAuthorized)
 	u.Router.Get("/user/logout", u.LogOutUser)
 }
 
@@ -79,4 +91,19 @@ func (u *UserController) LogOutUser(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(global.NewBaseResponse(fiber.StatusOK, "User logged out successfully"))
+}
+
+func (u *UserController) IsAuthorized(c *fiber.Ctx) error {
+	// Get token from header
+	token := c.Get("Authorization")
+
+	//Strip Bearer from token
+	token = token[7:]
+
+	//check if token is blacklisted
+	if u.UserService.IsTokenBlacklisted(c.Context(), token) {
+		return c.Status(fiber.StatusUnauthorized).JSON(global.NewBaseResponse(fiber.StatusUnauthorized, "Unauthorized"))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(global.NewBaseResponse(fiber.StatusOK, "User is authorized"))
 }

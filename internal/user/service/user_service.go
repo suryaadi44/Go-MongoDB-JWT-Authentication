@@ -112,3 +112,7 @@ func (u UserService) AddTokenToBlacklist(ctx context.Context, tokenString string
 
 	return nil
 }
+
+func (u UserService) IsTokenBlacklisted(ctx context.Context, tokenString string) bool {
+	return u.userRepository.IsTokenBlacklisted(ctx, tokenString)
+}

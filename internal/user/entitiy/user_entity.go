@@ -13,7 +13,6 @@ type User struct {
 }
 
 type BlackListedToken struct {
-	ID        string    `bson:"_id, omitempty"`
 	Token     string    `bson:"token"`
 	ExpiresAt time.Time `bson:"expiresAt"`
 }

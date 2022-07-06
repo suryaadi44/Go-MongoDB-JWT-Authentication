@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	entity "github.com/suryaadi44/Go-MongoDB-JWT-Authentication/internal/user/entitiy"
 	"go.mongodb.org/mongo-driver/bson"
@@ -62,4 +63,17 @@ func (u *UserRepository) GetUserByEmail(ctx context.Context, email string) (enti
 	}
 
 	return user, nil
+}
+
+func (u *UserRepository) AddTokenToBlacklist(ctx context.Context, token string, expiresAt time.Time) error {
+	collection := u.db.Collection("blacklisted_tokens")
+
+	_, err := collection.InsertOne(ctx, entity.BlackListedToken{
+		Token:     token,
+		ExpiresAt: expiresAt,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }

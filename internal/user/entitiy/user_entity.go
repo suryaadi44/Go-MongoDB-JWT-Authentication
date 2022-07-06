@@ -11,3 +11,9 @@ type User struct {
 	Rank     int       `bson:"rank"`
 	Created  time.Time `bson:"created"`
 }
+
+type BlackListedToken struct {
+	ID        string    `bson:"_id, omitempty"`
+	Token     string    `bson:"token"`
+	ExpiresAt time.Time `bson:"expiresAt"`
+}

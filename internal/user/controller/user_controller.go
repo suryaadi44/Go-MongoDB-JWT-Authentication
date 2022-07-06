@@ -23,6 +23,7 @@ func NewUserController(Router fiber.Router, userService service.UserService) *Us
 func (u *UserController) InitializeController() {
 	u.Router.Post("/user/signup", u.RegisterUser)
 	u.Router.Post("/user/login", u.AuthenticateUser)
+	u.Router.Get("/user/logout", u.LogOutUser)
 }
 
 func (u *UserController) RegisterUser(c *fiber.Ctx) error {
@@ -62,4 +63,20 @@ func (u *UserController) AuthenticateUser(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(global.NewBaseResponse(fiber.StatusOK, *token))
+}
+
+func (u *UserController) LogOutUser(c *fiber.Ctx) error {
+	// Get token from header
+	token := c.Get("Authorization")
+
+	//Strip Bearer from token
+	token = token[7:]
+
+	// Add to blacklist
+	err := u.UserService.AddTokenToBlacklist(c.Context(), token)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(global.NewBaseResponse(fiber.StatusInternalServerError, err.Error()))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(global.NewBaseResponse(fiber.StatusOK, "User logged out successfully"))
 }

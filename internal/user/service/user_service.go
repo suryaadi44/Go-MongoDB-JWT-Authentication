@@ -85,3 +85,30 @@ func (u UserService) AuthenticateUser(ctx context.Context, user dto.LoginRequest
 
 	return &tokenString, nil
 }
+
+func (u UserService) AddTokenToBlacklist(ctx context.Context, tokenString string) error {
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+	if err != nil {
+		log.Println("[User] Error parsing token :", err)
+		return err
+	}
+
+	claims, ok := token.Claims.(*jwt.StandardClaims)
+
+	var expiresAt time.Time
+	if !ok {
+		expiresAt = time.Now().Add(time.Hour * 2)
+	} else {
+		expiresAt = time.Unix(claims.ExpiresAt, 0)
+	}
+
+	err = u.userRepository.AddTokenToBlacklist(ctx, tokenString, expiresAt)
+	if err != nil {
+		log.Println("[User] Error adding token to blacklist :", err)
+		return err
+	}
+
+	return nil
+}
